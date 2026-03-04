@@ -31,7 +31,9 @@
     width: 100%;
     height: 100dvh;
     position: relative;
+    transition: filter 0.35s ease;
   }
+  .app.paused { filter: grayscale(1) brightness(0.65); pointer-events: none; }
 
   /* ── Divider ── */
   .divider {
@@ -69,6 +71,48 @@
   }
   .divider-gem:active { transform: translate(-50%, -50%) scale(0.87); }
 
+  /* ── PAUSE button — vertical pill on right edge, centred on divider ── */
+  .pause-btn {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+
+    /* rotated sideways — text reads bottom-to-top */
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: translateY(-50%) rotate(180deg);
+
+    height: 18vh;
+    width: 6vw;
+    min-width: 28px;
+
+    background: rgba(240,244,255,0.09);
+    border: 1.5px solid rgba(240,244,255,0.28);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+
+    color: rgba(240,244,255,0.65);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 1.6vh;
+    letter-spacing: 0.35vw;
+    text-transform: uppercase;
+
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .pause-btn:active {
+    background: rgba(240,244,255,0.22);
+    color: var(--white);
+    border-color: rgba(240,244,255,0.6);
+  }
+
   /* ── Player zones ── */
   .player {
     flex: 1;
@@ -85,7 +129,6 @@
       radial-gradient(ellipse at 50% 60%, rgba(26,95,180,0.2) 0%, transparent 65%),
       linear-gradient(180deg, #0d2145 0%, #112a55 100%);
   }
-
   .player.bottom {
     background:
       radial-gradient(ellipse at 50% 60%, rgba(26,95,180,0.2) 0%, transparent 65%),
@@ -113,19 +156,7 @@
       linear-gradient(180deg, #0d2145 0%, #112a55 100%);
   }
 
-  .rune-bg {
-    position: absolute;
-    inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20vh;
-    color: rgba(74,144,217,0.04);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── Layout: top half = PLUS, bottom half = MINUS, pass bar fixed at bottom ── */
-
-  /* PLUS zone: top 50% of panel (above life info) */
+  /* ── Hit zones ── */
   .hit-zone {
     position: absolute;
     left: 0; right: 0;
@@ -136,24 +167,19 @@
     transition: background 0.12s;
     z-index: 1;
   }
-
   .hit-zone.plus {
     top: 0;
-    /* from top of panel down to where center info starts */
     height: calc(50% - 1vh);
     background: linear-gradient(180deg, rgba(74,144,217,0.08) 0%, transparent 100%);
     border-bottom: 1px solid rgba(74,144,217,0.1);
   }
-
   .hit-zone.minus {
-    /* from just below center info down to pass button */
     top: 50%;
     bottom: 8.5vh;
     height: auto;
     background: linear-gradient(0deg, rgba(192,57,43,0.08) 0%, transparent 100%);
     border-top: 1px solid rgba(192,57,43,0.1);
   }
-
   .hit-zone.plus:active  { background: rgba(74,144,217,0.22); }
   .hit-zone.minus:active { background: rgba(192,57,43,0.22); }
 
@@ -165,7 +191,7 @@
   }
   .hit-zone:active .hit-icon { color: var(--white); transform: scale(1.3); }
 
-  /* ── Center info: countdown + life + turn — pinned at vertical center ── */
+  /* ── Center info — timers floated higher, life below ── */
   .center-stack {
     position: absolute;
     left: 0; right: 0;
@@ -176,16 +202,17 @@
     flex-direction: column;
     align-items: center;
     pointer-events: none;
-    gap: 0;
   }
 
+  /* countdown sits above life with clear gap */
   .countdown {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 3.8vh;
+    font-size: 4vh;
     color: var(--blue-pale);
-    letter-spacing: 0.4vw;
-    text-shadow: 0 0 10px rgba(74,144,217,0.5);
+    letter-spacing: 0.5vw;
+    text-shadow: 0 0 12px rgba(74,144,217,0.6);
     line-height: 1;
+    margin-bottom: 0.5vh;
     transition: color 0.3s;
   }
   .countdown.warning { color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,0.7); }
@@ -193,9 +220,9 @@
 
   .life-number {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 19vh;
+    font-size: 28vh;
     color: var(--white);
-    line-height: 0.88;
+    line-height: 0.82;
     letter-spacing: 0.5vw;
     text-shadow:
       0 0 28px rgba(74,144,217,0.75),
@@ -216,13 +243,15 @@
     100%{ transform: scale(1);    color: var(--white); }
   }
 
+  /* turn timer sits below life with clear gap */
   .turn-timer {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 4vh;
     color: var(--red-light);
-    letter-spacing: 0.4vw;
+    letter-spacing: 0.5vw;
     text-shadow: 0 0 14px rgba(231,76,60,0.75);
     line-height: 1;
+    margin-top: 0.5vh;
     transition: color 0.2s;
   }
   .turn-timer.inactive {
@@ -233,8 +262,7 @@
   /* ── PASS TURN bar ── */
   .pass-btn {
     position: absolute;
-    bottom: 0;
-    left: 0; right: 0;
+    bottom: 0; left: 0; right: 0;
     height: 8.5vh;
     z-index: 3;
     pointer-events: all;
@@ -258,13 +286,13 @@
     background: rgba(231,76,60,0.14);
     border-top: 2px solid rgba(231,76,60,0.7);
     color: var(--red-light);
-    box-shadow: 0 -4px 20px rgba(231,76,60,0.2), inset 0 0 20px rgba(231,76,60,0.05);
+    box-shadow: 0 -4px 20px rgba(231,76,60,0.2);
   }
   .pass-btn.active-turn:active {
     background: rgba(231,76,60,0.32);
     box-shadow: 0 -6px 30px rgba(231,76,60,0.5);
   }
-  .pass-arrow { font-size: 2.6vh; line-height: 1; }
+  .pass-arrow { font-size: 2.6vh; }
 
   /* ── Start buttons ── */
   .start-area {
@@ -289,9 +317,48 @@
     cursor: pointer;
     text-transform: uppercase;
     white-space: nowrap;
-    transition: background 0.12s, border-color 0.12s;
+    transition: background 0.12s;
   }
   .start-btn:active { background: rgba(74,144,217,0.22); border-color: var(--blue-light); color: var(--white); }
+
+  /* ── PAUSE OVERLAY ── */
+  .pause-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3vh;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(3px);
+  }
+  .pause-overlay.visible { display: flex; }
+
+  .pause-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 9vh;
+    color: #fff;
+    letter-spacing: 1vw;
+    text-shadow: 0 0 30px rgba(255,255,255,0.35);
+  }
+
+  .continue-btn {
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.6);
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 2.6vh;
+    letter-spacing: 0.5vw;
+    padding: 1.8vh 12vw;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.15s;
+  }
+  .continue-btn:active { background: rgba(255,255,255,0.28); }
 
   @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
@@ -300,7 +367,7 @@
     background: rgba(74,144,217,0.15);
     pointer-events: none;
     opacity: 0;
-    z-index: 100;
+    z-index: 300;
     transition: opacity 0.3s;
   }
   .flash-overlay.show { opacity: 1; }
@@ -310,37 +377,31 @@
 
 <div class="flash-overlay" id="flashOverlay"></div>
 
-<div class="app">
+<!-- PAUSE OVERLAY -->
+<div class="pause-overlay" id="pauseOverlay">
+  <div class="pause-label">PAUSED</div>
+  <button class="continue-btn" onclick="resumeGame()">▶ CONTINUE</button>
+</div>
+
+<!-- Single sideways PAUSE button on right edge -->
+<button class="pause-btn" onclick="pauseGame()">⏸ PAUSE</button>
+
+<div class="app" id="app">
 
   <!-- TOP (rotated 180°) -->
   <div class="player top" id="playerTop">
-    <div class="rune-bg">⚔</div>
-
-    <!-- + covers top half -->
-    <div class="hit-zone plus" onclick="changeLife('top', 1)">
-      <span class="hit-icon">＋</span>
-    </div>
-
-    <!-- center info -->
+    <div class="hit-zone plus"  onclick="changeLife('top',  1)"><span class="hit-icon">＋</span></div>
     <div class="center-stack">
       <div class="countdown" id="countdownTop">50:00</div>
       <div class="life-number" id="lifeTop">20</div>
       <div class="turn-timer inactive" id="turnTop">0:00</div>
     </div>
-
-    <!-- - covers bottom half above pass btn -->
-    <div class="hit-zone minus" onclick="changeLife('top', -1)">
-      <span class="hit-icon">－</span>
-    </div>
-
+    <div class="hit-zone minus" onclick="changeLife('top', -1)"><span class="hit-icon">－</span></div>
     <div class="start-area">
-      <button class="start-btn" id="startBtnTop" onclick="startGame('top')">START — TOP GOES FIRST</button>
+      <button class="start-btn" id="startBtnTop" onclick="startGame('top')">START</button>
     </div>
-
     <button class="pass-btn inactive-turn" id="passBtnTop" onclick="passTurn('top')">
-      <span class="pass-arrow">⟶</span>
-      PASS TURN
-      <span class="pass-arrow">⟶</span>
+      <span class="pass-arrow">⟶</span> PASS TURN <span class="pass-arrow">⟶</span>
     </button>
   </div>
 
@@ -351,30 +412,18 @@
 
   <!-- BOTTOM -->
   <div class="player bottom" id="playerBottom">
-    <div class="rune-bg">⚔</div>
-
-    <div class="hit-zone plus" onclick="changeLife('bottom', 1)">
-      <span class="hit-icon">＋</span>
-    </div>
-
+    <div class="hit-zone plus"  onclick="changeLife('bottom',  1)"><span class="hit-icon">＋</span></div>
     <div class="center-stack">
       <div class="countdown" id="countdownBottom">50:00</div>
       <div class="life-number" id="lifeBottom">20</div>
       <div class="turn-timer inactive" id="turnBottom">0:00</div>
     </div>
-
-    <div class="hit-zone minus" onclick="changeLife('bottom', -1)">
-      <span class="hit-icon">－</span>
-    </div>
-
+    <div class="hit-zone minus" onclick="changeLife('bottom', -1)"><span class="hit-icon">－</span></div>
     <div class="start-area">
-      <button class="start-btn" id="startBtnBottom" onclick="startGame('bottom')">START — BOTTOM GOES FIRST</button>
+      <button class="start-btn" id="startBtnBottom" onclick="startGame('bottom')">START</button>
     </div>
-
     <button class="pass-btn inactive-turn" id="passBtnBottom" onclick="passTurn('bottom')">
-      <span class="pass-arrow">⟶</span>
-      PASS TURN
-      <span class="pass-arrow">⟶</span>
+      <span class="pass-arrow">⟶</span> PASS TURN <span class="pass-arrow">⟶</span>
     </button>
   </div>
 
@@ -382,12 +431,12 @@
 
 <script>
   const opp = { top: 'bottom', bottom: 'top' };
-
   const state = {
     top:    { life: 20, countdown: 3000, turnSecs: 0 },
     bottom: { life: 20, countdown: 3000, turnSecs: 0 },
     activeTurn: null,
     gameStarted: false,
+    paused: false,
     mainInterval: null,
   };
 
@@ -411,13 +460,10 @@
   function setActiveTurn(p) {
     state.activeTurn = p;
     const other = opp[p];
-
     document.getElementById(`turn${cap(p)}`).classList.remove('inactive');
     document.getElementById(`turn${cap(other)}`).classList.add('inactive');
-
     document.getElementById(`passBtn${cap(p)}`).className     = 'pass-btn active-turn';
     document.getElementById(`passBtn${cap(other)}`).className = 'pass-btn inactive-turn';
-
     document.getElementById(`player${cap(p)}`).classList.add('active-turn');
     document.getElementById(`player${cap(other)}`).classList.remove('active-turn');
   }
@@ -425,19 +471,19 @@
   function startGame(firstPlayer) {
     if (state.gameStarted) return;
     state.gameStarted = true;
-
     document.getElementById('startBtnTop').style.display    = 'none';
     document.getElementById('startBtnBottom').style.display = 'none';
-
     setActiveTurn(firstPlayer);
+    startTick();
+  }
 
+  function startTick() {
+    clearInterval(state.mainInterval);
     state.mainInterval = setInterval(() => {
+      if (state.paused || !state.activeTurn) return;
       const p = state.activeTurn;
-      if (!p) return;
-
       state[p].turnSecs++;
       updateTurnTimer(p);
-
       ['top','bottom'].forEach(side => {
         if (state[side].countdown > 0) {
           state[side].countdown--;
@@ -447,12 +493,26 @@
     }, 1000);
   }
 
+  function pauseGame() {
+    if (!state.gameStarted) return;
+    state.paused = true;
+    document.getElementById('app').classList.add('paused');
+    document.getElementById('pauseOverlay').classList.add('visible');
+  }
+
+  function resumeGame() {
+    state.paused = false;
+    document.getElementById('app').classList.remove('paused');
+    document.getElementById('pauseOverlay').classList.remove('visible');
+  }
+
   function passTurn(p) {
-    if (!state.gameStarted || state.activeTurn !== p) return;
+    if (!state.gameStarted || state.paused || state.activeTurn !== p) return;
     setActiveTurn(opp[p]);
   }
 
   function changeLife(p, delta) {
+    if (state.paused) return;
     state[p].life += delta;
     const el = document.getElementById(`life${cap(p)}`);
     el.textContent = state[p].life;
@@ -465,17 +525,18 @@
     clearInterval(state.mainInterval);
     state.mainInterval = null;
     state.gameStarted  = false;
+    state.paused       = false;
     state.activeTurn   = null;
+    document.getElementById('app').classList.remove('paused');
+    document.getElementById('pauseOverlay').classList.remove('visible');
 
     ['top','bottom'].forEach(p => {
       state[p].life      = 20;
       state[p].countdown = 3000;
       state[p].turnSecs  = 0;
-
       document.getElementById(`life${cap(p)}`).textContent = '20';
       updateCountdown(p);
       updateTurnTimer(p);
-
       document.getElementById(`turn${cap(p)}`).classList.add('inactive');
       document.getElementById(`passBtn${cap(p)}`).className = 'pass-btn inactive-turn';
       document.getElementById(`player${cap(p)}`).classList.remove('active-turn');

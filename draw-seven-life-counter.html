@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Draw Seven Life Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white:      #f0f4ff;
+    --blue:       #1a5fb4;
+    --blue-light: #4a90d9;
+    --blue-pale:  #c8dcf5;
+    --red:        #c0392b;
+    --red-light:  #e74c3c;
+    --navy:       #0d2145;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--navy);
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100dvh;
+    position: relative;
+  }
+
+  /* ── Divider ── */
+  .divider {
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 4px;
+    background: linear-gradient(90deg,
+      transparent,
+      var(--red) 10%, var(--red-light) 25%,
+      var(--white) 50%,
+      var(--blue-light) 75%, var(--blue) 90%,
+      transparent);
+    z-index: 10;
+    box-shadow: 0 0 14px rgba(74,144,217,0.6), 0 0 30px rgba(74,144,217,0.2);
+  }
+
+  .divider-gem {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px; height: 40px;
+    background: radial-gradient(circle at 38% 32%, #ffffff, var(--blue-light), var(--blue));
+    border-radius: 50%;
+    border: 2.5px solid var(--white);
+    box-shadow: 0 0 18px rgba(74,144,217,0.9), 0 0 40px rgba(74,144,217,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    color: var(--navy);
+    z-index: 11;
+    cursor: pointer;
+    transition: transform 0.15s;
+    font-weight: 900;
+  }
+  .divider-gem:active { transform: translate(-50%, -50%) scale(0.87); }
+
+  /* ── Player zones ── */
+  .player {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .player.top {
+    transform: rotate(180deg);
+    background:
+      radial-gradient(ellipse at 50% 75%, rgba(26,95,180,0.2) 0%, transparent 65%),
+      linear-gradient(180deg, #0d2145 0%, #112a55 100%);
+  }
+
+  .player.bottom {
+    background:
+      radial-gradient(ellipse at 50% 75%, rgba(26,95,180,0.2) 0%, transparent 65%),
+      linear-gradient(180deg, #0d2145 0%, #112a55 100%);
+  }
+
+  .player::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg,
+      var(--red) 0%, var(--red) 33%,
+      var(--white) 33%, var(--white) 66%,
+      var(--blue) 66%, var(--blue) 100%);
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
+  .player.active-turn {
+    background:
+      radial-gradient(ellipse at 50% 75%, rgba(231,76,60,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 75%, rgba(26,95,180,0.2) 0%, transparent 65%),
+      linear-gradient(180deg, #0d2145 0%, #112a55 100%);
+  }
+
+  .rune-bg {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 170px;
+    color: rgba(74,144,217,0.04);
+    pointer-events: none;
+  }
+
+  .side-line {
+    position: absolute;
+    top: 8%; bottom: 8%;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(74,144,217,0.25), transparent);
+    pointer-events: none;
+  }
+  .side-line.left  { left: 14px; }
+  .side-line.right { right: 14px; }
+
+  /* ── Hit zones ── */
+  .hit-zone {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.12s;
+    z-index: 1;
+  }
+  .hit-zone.plus {
+    top: 0; height: 35%;
+    background: linear-gradient(180deg, rgba(74,144,217,0.10) 0%, transparent 100%);
+  }
+  .hit-zone.minus {
+    bottom: 0; height: 35%;
+    background: linear-gradient(0deg, rgba(192,57,43,0.10) 0%, transparent 100%);
+  }
+  .hit-zone.plus:active  { background: rgba(74,144,217,0.26); }
+  .hit-zone.minus:active { background: rgba(192,57,43,0.26); }
+
+  .hit-icon {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: rgba(200,220,245,0.28);
+    transition: color 0.1s, transform 0.1s;
+  }
+  .hit-zone:active .hit-icon { color: var(--white); transform: scale(1.4); }
+
+  /* ── Center content stack ── */
+  .center-stack {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    pointer-events: none;
+  }
+
+  /* countdown timer */
+  .countdown {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(24px, 6.5vw, 38px);
+    color: var(--blue-pale);
+    letter-spacing: 5px;
+    text-shadow: 0 0 10px rgba(74,144,217,0.5);
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .countdown.warning { color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,0.7); }
+  .countdown.danger  { color: var(--red-light); text-shadow: 0 0 14px rgba(231,76,60,0.8); animation: pulse-red 0.75s infinite; }
+
+  /* life number */
+  .life-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(120px, 30vw, 172px);
+    color: var(--white);
+    line-height: 0.85;
+    letter-spacing: 6px;
+    text-shadow:
+      0 0 28px rgba(74,144,217,0.75),
+      0 0 70px rgba(74,144,217,0.25),
+      0 4px 8px rgba(0,0,0,0.7);
+  }
+  .life-number.bump-up   { animation: bumpUp   0.22s ease-out; }
+  .life-number.bump-down { animation: bumpDown 0.22s ease-out; }
+
+  @keyframes bumpUp {
+    0%  { transform: scale(1);    color: var(--white); }
+    45% { transform: scale(1.10); color: #60d8ff; text-shadow: 0 0 35px rgba(60,200,255,0.95); }
+    100%{ transform: scale(1);    color: var(--white); }
+  }
+  @keyframes bumpDown {
+    0%  { transform: scale(1);    color: var(--white); }
+    45% { transform: scale(0.91); color: #ff6b6b; text-shadow: 0 0 35px rgba(255,80,80,0.95); }
+    100%{ transform: scale(1);    color: var(--white); }
+  }
+
+  /* turn timer — RED */
+  .turn-timer {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 7.5vw, 44px);
+    color: var(--red-light);
+    letter-spacing: 5px;
+    text-shadow: 0 0 14px rgba(231,76,60,0.75);
+    line-height: 1;
+    margin-top: 2px;
+    transition: color 0.2s;
+  }
+  .turn-timer.inactive {
+    color: rgba(231,76,60,0.28);
+    text-shadow: none;
+  }
+
+  /* pass turn button */
+  .pass-btn {
+    pointer-events: all;
+    margin-top: 8px;
+    background: rgba(231,76,60,0.1);
+    border: 1.5px solid rgba(231,76,60,0.45);
+    color: var(--red-light);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 3px;
+    padding: 6px 24px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  }
+  .pass-btn:active {
+    background: rgba(231,76,60,0.28);
+    border-color: var(--red-light);
+    box-shadow: 0 0 14px rgba(231,76,60,0.5);
+  }
+  .pass-btn.active-turn {
+    background: rgba(231,76,60,0.12);
+    border-color: var(--red-light);
+    box-shadow: 0 0 10px rgba(231,76,60,0.4);
+  }
+  .pass-btn.inactive-turn {
+    opacity: 0.35;
+  }
+
+  /* start buttons */
+  .start-area {
+    position: absolute;
+    bottom: 14px;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: all;
+    z-index: 3;
+  }
+  .start-btn {
+    background: rgba(240,244,255,0.07);
+    border: 1.5px solid rgba(74,144,217,0.4);
+    color: var(--blue-pale);
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2.5px;
+    padding: 5px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .start-btn:active { background: rgba(74,144,217,0.22); border-color: var(--blue-light); color: var(--white); }
+
+  @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .flash-overlay {
+    position: fixed; inset: 0;
+    background: rgba(74,144,217,0.15);
+    pointer-events: none;
+    opacity: 0;
+    z-index: 100;
+    transition: opacity 0.3s;
+  }
+  .flash-overlay.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<div class="app">
+
+  <!-- TOP (rotated 180°) -->
+  <div class="player top" id="playerTop">
+    <div class="rune-bg">⚔</div>
+    <div class="side-line left"></div>
+    <div class="side-line right"></div>
+
+    <div class="hit-zone plus"  onclick="changeLife('top',  1)"><span class="hit-icon">＋</span></div>
+    <div class="hit-zone minus" onclick="changeLife('top', -1)"><span class="hit-icon">－</span></div>
+
+    <div class="center-stack">
+      <div class="countdown" id="countdownTop">50:00</div>
+      <div class="life-number" id="lifeTop">20</div>
+      <div class="turn-timer inactive" id="turnTop">0:00</div>
+      <button class="pass-btn inactive-turn" id="passBtnTop" onclick="passTurn('top')">PASS TURN</button>
+    </div>
+
+    <div class="start-area">
+      <button class="start-btn" id="startBtnTop" onclick="startGame('top')">START — TOP GOES FIRST</button>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div class="divider">
+    <div class="divider-gem" onclick="resetAll()">⟳</div>
+  </div>
+
+  <!-- BOTTOM -->
+  <div class="player bottom" id="playerBottom">
+    <div class="rune-bg">⚔</div>
+    <div class="side-line left"></div>
+    <div class="side-line right"></div>
+
+    <div class="hit-zone plus"  onclick="changeLife('bottom',  1)"><span class="hit-icon">＋</span></div>
+    <div class="hit-zone minus" onclick="changeLife('bottom', -1)"><span class="hit-icon">－</span></div>
+
+    <div class="center-stack">
+      <div class="countdown" id="countdownBottom">50:00</div>
+      <div class="life-number" id="lifeBottom">20</div>
+      <div class="turn-timer inactive" id="turnBottom">0:00</div>
+      <button class="pass-btn inactive-turn" id="passBtnBottom" onclick="passTurn('bottom')">PASS TURN</button>
+    </div>
+
+    <div class="start-area">
+      <button class="start-btn" id="startBtnBottom" onclick="startGame('bottom')">START — BOTTOM GOES FIRST</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const opp = { top: 'bottom', bottom: 'top' };
+
+  const state = {
+    top:    { life: 20, countdown: 3000, turnSecs: 0 },
+    bottom: { life: 20, countdown: 3000, turnSecs: 0 },
+    activeTurn: null,
+    gameStarted: false,
+    mainInterval: null,
+  };
+
+  function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function fmtCD(s) {
+    return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+  }
+  function fmtTurn(s) {
+    return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+  }
+
+  function updateCountdown(p) {
+    const el = document.getElementById(`countdown${cap(p)}`);
+    const s = state[p].countdown;
+    el.textContent = fmtCD(s);
+    el.className = 'countdown';
+    if (s <= 300) el.classList.add('danger');
+    else if (s <= 600) el.classList.add('warning');
+  }
+
+  function updateTurnTimer(p) {
+    document.getElementById(`turn${cap(p)}`).textContent = fmtTurn(state[p].turnSecs);
+  }
+
+  function setActiveTurn(p) {
+    state.activeTurn = p;
+    const other = opp[p];
+
+    document.getElementById(`turn${cap(p)}`).classList.remove('inactive');
+    document.getElementById(`turn${cap(other)}`).classList.add('inactive');
+
+    document.getElementById(`passBtn${cap(p)}`).className     = 'pass-btn active-turn';
+    document.getElementById(`passBtn${cap(other)}`).className = 'pass-btn inactive-turn';
+
+    document.getElementById(`player${cap(p)}`).classList.add('active-turn');
+    document.getElementById(`player${cap(other)}`).classList.remove('active-turn');
+  }
+
+  function startGame(firstPlayer) {
+    if (state.gameStarted) return;
+    state.gameStarted = true;
+
+    document.getElementById('startBtnTop').style.display    = 'none';
+    document.getElementById('startBtnBottom').style.display = 'none';
+
+    setActiveTurn(firstPlayer);
+
+    state.mainInterval = setInterval(() => {
+      const p = state.activeTurn;
+      if (!p) return;
+
+      // turn timer counts UP and keeps accumulating (no reset on pass)
+      state[p].turnSecs++;
+      updateTurnTimer(p);
+
+      // countdown ticks down for both
+      ['top','bottom'].forEach(side => {
+        if (state[side].countdown > 0) {
+          state[side].countdown--;
+          updateCountdown(side);
+        }
+      });
+    }, 1000);
+  }
+
+  function passTurn(p) {
+    if (!state.gameStarted || state.activeTurn !== p) return;
+    // DO NOT reset turnSecs — time keeps accumulating from where it was
+    setActiveTurn(opp[p]);
+  }
+
+  function changeLife(p, delta) {
+    state[p].life += delta;
+    const el = document.getElementById(`life${cap(p)}`);
+    el.textContent = state[p].life;
+    el.classList.remove('bump-up', 'bump-down');
+    void el.offsetWidth;
+    el.classList.add(delta > 0 ? 'bump-up' : 'bump-down');
+  }
+
+  function resetAll() {
+    clearInterval(state.mainInterval);
+    state.mainInterval = null;
+    state.gameStarted  = false;
+    state.activeTurn   = null;
+
+    ['top','bottom'].forEach(p => {
+      state[p].life      = 20;
+      state[p].countdown = 3000;
+      state[p].turnSecs  = 0;
+
+      document.getElementById(`life${cap(p)}`).textContent = '20';
+      updateCountdown(p);
+      updateTurnTimer(p);
+
+      document.getElementById(`turn${cap(p)}`).classList.add('inactive');
+      document.getElementById(`passBtn${cap(p)}`).className = 'pass-btn inactive-turn';
+      document.getElementById(`player${cap(p)}`).classList.remove('active-turn');
+      document.getElementById(`startBtn${cap(p)}`).style.display = '';
+    });
+
+    const f = document.getElementById('flashOverlay');
+    f.classList.add('show');
+    setTimeout(() => f.classList.remove('show'), 280);
+  }
+
+  updateCountdown('top');
+  updateCountdown('bottom');
+  updateTurnTimer('top');
+  updateTurnTimer('bottom');
+</script>
+</body>
+</html>

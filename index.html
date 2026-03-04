@@ -82,12 +82,12 @@
     width: 6vw;
     min-width: 28px;
 
-    background: rgba(240,244,255,0.09);
-    border: 1.5px solid rgba(240,244,255,0.28);
+    background: #1a3a6b;
+    border: 1.5px solid #4a90d9;
     border-right: none;
     border-radius: 6px 0 0 6px;
 
-    color: rgba(240,244,255,0.65);
+    color: #ffffff;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
     font-size: 1.6vh;
@@ -102,9 +102,9 @@
     transition: background 0.12s, color 0.12s, border-color 0.12s;
   }
   .pause-btn:active {
-    background: rgba(240,244,255,0.22);
+    background: #0d2145;
     color: var(--white);
-    border-color: rgba(240,244,255,0.6);
+    border-color: #4a90d9;
   }
 
   /* ── Player zones ── */
@@ -148,6 +148,35 @@
       radial-gradient(ellipse at 50% 60%, rgba(231,76,60,0.07) 0%, transparent 60%),
       radial-gradient(ellipse at 50% 60%, rgba(26,95,180,0.2) 0%, transparent 65%),
       linear-gradient(180deg, #0d2145 0%, #112a55 100%);
+  }
+
+
+  /* ── Total Time Spent label ── */
+  .total-time {
+    position: absolute;
+    /* bottom player: near divider = top of zone after rotation = low % from top */
+    top: 38%;
+    left: 4vw;
+    right: auto;
+    text-align: left;
+    z-index: 5;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.6vh;
+    font-weight: 600;
+    color: rgba(200,220,245,0.6);
+    letter-spacing: 0.1vw;
+    line-height: 1.4;
+    pointer-events: none;
+  }
+  /* top player rotated 180deg — near divider means bottom of the element */
+  .player.top .total-time {
+    top: auto;
+    bottom: 38%;
+    left: 4vw;
+  }
+  .total-time span {
+    color: var(--blue-pale);
+    font-weight: 700;
   }
 
   /* ── Hit zones ── */
@@ -306,21 +335,25 @@
     z-index: 4;
   }
   .start-btn {
-    background: rgba(240,244,255,0.07);
-    border: 1.5px solid rgba(74,144,217,0.4);
-    color: var(--blue-pale);
+    background: #1e7d34 !important;
+    border: 2px solid #2ecc52;
+    color: #ffffff;
     font-family: 'Rajdhani', sans-serif;
     font-weight: 700;
-    font-size: 1.7vh;
+    font-size: 1.9vh;
     letter-spacing: 0.25vw;
-    padding: 0.9vh 5vw;
-    border-radius: 3px;
+    padding: 1.2vh 6vw;
+    border-radius: 6px;
     cursor: pointer;
     text-transform: uppercase;
     white-space: nowrap;
     transition: background 0.12s;
+    opacity: 1;
+    box-shadow: 0 0 0 3px #145224, 0 4px 12px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 10;
   }
-  .start-btn:active { background: rgba(74,144,217,0.22); border-color: var(--blue-light); color: var(--white); }
+  .start-btn:active { background: #145224; border-color: #2ecc52; color: var(--white); }
 
   /* ── PAUSE OVERLAY ── */
   .pause-overlay {
@@ -391,6 +424,7 @@
 
   <!-- TOP (rotated 180°) -->
   <div class="player top" id="playerTop">
+    <div class="total-time">Total Time Spent = <span id="totalTop">0%</span></div>
     <div class="hit-zone plus"  onclick="changeLife('top',  1)"><span class="hit-icon">＋</span></div>
     <div class="center-stack">
       <div class="countdown" id="countdownTop">50:00</div>
@@ -413,6 +447,7 @@
 
   <!-- BOTTOM -->
   <div class="player bottom" id="playerBottom">
+    <div class="total-time">Total Time Spent = <span id="totalBottom">0%</span></div>
     <div class="hit-zone plus"  onclick="changeLife('bottom',  1)"><span class="hit-icon">＋</span></div>
     <div class="center-stack">
       <div class="countdown" id="countdownBottom">50:00</div>
@@ -454,6 +489,11 @@
     else if (s <= 600) el.classList.add('warning');
   }
 
+  function updateTotalTime(p) {
+    const pct = Math.min(100, (state[p].turnSecs / 3000) * 100);
+    document.getElementById(`total${cap(p)}`).textContent = pct.toFixed(2) + '%';
+  }
+
   function updateTurnTimer(p) {
     document.getElementById(`turn${cap(p)}`).textContent = fmtTurn(state[p].turnSecs);
   }
@@ -485,6 +525,7 @@
       const p = state.activeTurn;
       state[p].turnSecs++;
       updateTurnTimer(p);
+      updateTotalTime(p);
       ['top','bottom'].forEach(side => {
         if (state[side].countdown > 0) {
           state[side].countdown--;
@@ -538,6 +579,7 @@
       document.getElementById(`life${cap(p)}`).textContent = '20';
       updateCountdown(p);
       updateTurnTimer(p);
+      updateTotalTime(p);
       document.getElementById(`turn${cap(p)}`).classList.add('inactive');
       document.getElementById(`passBtn${cap(p)}`).className = 'pass-btn inactive-turn';
       document.getElementById(`player${cap(p)}`).classList.remove('active-turn');
@@ -553,6 +595,8 @@
   updateCountdown('bottom');
   updateTurnTimer('top');
   updateTurnTimer('bottom');
+  updateTotalTime('top');
+  updateTotalTime('bottom');
 </script>
 </body>
 </html>

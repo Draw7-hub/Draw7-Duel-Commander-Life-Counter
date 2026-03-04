@@ -42,14 +42,9 @@
     top: 50%;
     transform: translateY(-50%);
     height: 4px;
-    background: linear-gradient(90deg,
-      transparent,
-      var(--red) 10%, var(--red-light) 25%,
-      var(--white) 50%,
-      var(--blue-light) 75%, var(--blue) 90%,
-      transparent);
+    background: #ffffff;
     z-index: 10;
-    box-shadow: 0 0 14px rgba(74,144,217,0.6), 0 0 30px rgba(74,144,217,0.2);
+    box-shadow: none;
   }
 
   .divider-gem {
@@ -214,6 +209,9 @@
     line-height: 1;
     margin-bottom: 0.5vh;
     transition: color 0.3s;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+
   }
   .countdown.warning { color: #f5a623; text-shadow: 0 0 12px rgba(245,166,35,0.7); }
   .countdown.danger  { color: var(--red-light); text-shadow: 0 0 14px rgba(231,76,60,0.8); animation: pulse-red 0.75s infinite; }
@@ -285,14 +283,14 @@
     gap: 2vw;
   }
   .pass-btn.active-turn {
-    background: rgba(231,76,60,0.14);
-    border-top: 2px solid rgba(231,76,60,0.7);
-    color: var(--red-light);
-    box-shadow: 0 -4px 20px rgba(231,76,60,0.2);
+    background: #8b0000;
+    border-top: 2px solid #a00000;
+    color: #ffffff;
+    box-shadow: none;
   }
   .pass-btn.active-turn:active {
-    background: rgba(231,76,60,0.32);
-    box-shadow: 0 -6px 30px rgba(231,76,60,0.5);
+    background: #6b0000;
+    box-shadow: none;
   }
   .pass-arrow { font-size: 2.6vh; }
 

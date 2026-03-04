@@ -152,32 +152,24 @@
 
 
   /* ── Total Time Spent label ── */
+  .turn-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5vw;
+    margin-top: 3vh;
+    margin-bottom: 11vh;
+  }
+
   .total-time {
-    position: absolute;
-    /* bottom player: near divider = top of zone after rotation = low % from top */
-    top: 38%;
-    left: 4vw;
-    right: auto;
-    text-align: left;
-    z-index: 5;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 1.6vh;
-    font-weight: 600;
-    color: rgba(200,220,245,0.6);
-    letter-spacing: 0.1vw;
-    line-height: 1.4;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2vh;
+    color: rgba(200,220,245,0.55);
+    letter-spacing: 0.3vw;
+    line-height: 1;
     pointer-events: none;
   }
-  /* top player rotated 180deg — near divider means bottom of the element */
-  .player.top .total-time {
-    top: auto;
-    bottom: 38%;
-    left: 4vw;
-  }
-  .total-time span {
-    color: var(--blue-pale);
-    font-weight: 700;
-  }
+
 
   /* ── Hit zones ── */
   .hit-zone {
@@ -280,8 +272,8 @@
     letter-spacing: 0.5vw;
     text-shadow: 0 0 14px rgba(231,76,60,0.75);
     line-height: 1;
-    margin-top: 0.5vh;
-    margin-bottom: 10vh;
+    margin-top: 0;
+    margin-bottom: 0;
     transition: color 0.2s;
   }
   .turn-timer.inactive {
@@ -424,12 +416,14 @@
 
   <!-- TOP (rotated 180°) -->
   <div class="player top" id="playerTop">
-    <div class="total-time">Total Time Spent = <span id="totalTop">0%</span></div>
     <div class="hit-zone plus"  onclick="changeLife('top',  1)"><span class="hit-icon">＋</span></div>
     <div class="center-stack">
       <div class="countdown" id="countdownTop">50:00</div>
       <div class="life-number" id="lifeTop">20</div>
-      <div class="turn-timer inactive" id="turnTop">0:00</div>
+      <div class="turn-row">
+        <div class="turn-timer inactive" id="turnTop">0:00</div>
+        <div class="total-time" id="totalTop">= 0.00%</div>
+      </div>
     </div>
     <div class="hit-zone minus" onclick="changeLife('top', -1)"><span class="hit-icon">－</span></div>
     <div class="start-area">
@@ -447,12 +441,14 @@
 
   <!-- BOTTOM -->
   <div class="player bottom" id="playerBottom">
-    <div class="total-time">Total Time Spent = <span id="totalBottom">0%</span></div>
     <div class="hit-zone plus"  onclick="changeLife('bottom',  1)"><span class="hit-icon">＋</span></div>
     <div class="center-stack">
       <div class="countdown" id="countdownBottom">50:00</div>
       <div class="life-number" id="lifeBottom">20</div>
-      <div class="turn-timer inactive" id="turnBottom">0:00</div>
+      <div class="turn-row">
+        <div class="turn-timer inactive" id="turnBottom">0:00</div>
+        <div class="total-time" id="totalBottom">= 0.00%</div>
+      </div>
     </div>
     <div class="hit-zone minus" onclick="changeLife('bottom', -1)"><span class="hit-icon">－</span></div>
     <div class="start-area">
@@ -491,7 +487,7 @@
 
   function updateTotalTime(p) {
     const pct = Math.min(100, (state[p].turnSecs / 3000) * 100);
-    document.getElementById(`total${cap(p)}`).textContent = pct.toFixed(2) + '%';
+    document.getElementById(`total${cap(p)}`).textContent = '= ' + pct.toFixed(2) + '%';
   }
 
   function updateTurnTimer(p) {
